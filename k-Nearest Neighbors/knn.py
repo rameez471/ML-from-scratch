@@ -26,4 +26,4 @@ class KNN:
         k_nearest_labels = [self.y_train[i] for i in k_index]
         # return the most common label
         most_common_label = Counter(k_nearest_labels).most_common(1)
-        return most_common_label        
+        return most_common_label[0][0]        
