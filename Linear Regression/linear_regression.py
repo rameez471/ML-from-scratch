@@ -20,6 +20,7 @@ class LinearRegression:
             dw = (1/n_samples) * np.dot(X.T,(y_pred-y))
             db = (1/n_samples) * np.sum(y_pred-y)
 
+
             self.weights = self.weights - self.learning_rate*dw  
             self.bias = self.bias - self.learning_rate*db
 
