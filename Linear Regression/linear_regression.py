@@ -12,7 +12,7 @@ class LinearRegression:
 
         n_samples,n_features = X.shape
         self.weights = np.zeros(n_features)
-        self.bias = np.zeros(n_features)
+        self.bias = 0
 
         for i in range(self.n_iterations):
             y_pred = self.predict(X)
