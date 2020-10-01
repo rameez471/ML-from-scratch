@@ -41,7 +41,7 @@ class NeuralNetwork(object):
 
     def compute_deltas(self, pre_activations, y_true, y_pred):
         
-        delta_L = cost_function_prime(y_true, y_pred) * activation(pre_activations[-1].derivative=True)
+        delta_L = cost_function_prime(y_true, y_pred) * activation(pre_activations[-1],derivative=True)
         deltas = [0] * (len(self.size)-1)
         deltas[-1] = delta_L
         for l in range(len(deltas)-2, -1, -1):
@@ -65,8 +65,9 @@ class NeuralNetwork(object):
     def plot_decision_regions(self,X,y,iterations,train_loss,val_loss,train_acc,val_acc,res=0.01):
         X, y = X.T,y.T
         x_min, x_max = X[:,0].min()-0.5, X[:,0].max()+0.5
-        xx, yy = np.meshgrid(np.arrange(x_min,x_max,res),
-                            np.arrange(y_min,y_max,res))
+        y_min, y_max = X[:, 1].min() - 0.5, X[:, 1].max() + 0.5
+        xx, yy = np.meshgrid(np.arange(x_min,x_max,res),
+                            np.arange(y_min,y_max,res))
 
         Z = self.predict(np.c_[xx.ravel(),yy.ravel()].T)
         Z = Z.reshape(xx.shape)
@@ -74,14 +75,14 @@ class NeuralNetwork(object):
         plt.xlim(xx.min(),xx.max())
         plt.ylim(yy.min(),yy.max())
         plt.scatter(X[:,0],X[:,1],c=y.reshape(-1),alpha=0.2)
-        message = 'iteration: {} | train loss: {} | val loss: {} | train acc: {} | val acc: {}'.format(iteration,
+        message = 'iteration: {} | train loss: {} | val loss: {} | train acc: {} | val acc: {}'.format(iterations,
                                                                                                      train_loss, 
                                                                                                      val_loss, 
                                                                                                      train_acc, 
                                                                                                      val_acc)
         plt.title(message)  
 
-    def train(self,X,y,batch_size,epochs,learning_rate,validation_split=0.2,plot=False):
+    def train(self,X,y,batch_size,epochs,learning_rate,validation_split=0.2,plot=True):
 
         X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=validation_split)
         X_train,X_test,y_train,y_test = X_train.T,X_test.T,y_train.T,y_test.T
@@ -107,12 +108,12 @@ class NeuralNetwork(object):
             train_accuracies = []
 
             test_losses = []
-            train_accuracies = []
+            test_accuracies = []
 
             dw_per_epoch = [np.zeros(w.shape) for w in self.weights]
             db_per_epoch = [np.zeros(b.shape) for b in self.biases]
             
-            for batch_x, batch_y in zip(batches_X,batch_y):
+            for batch_x, batch_y in zip(batches_X,batches_y):
                 batch_y_pred,pre_activations,activations = self.forward(batch_x)
                 deltas = self.compute_deltas(pre_activations,batch_y,batch_y_pred)
                 dW, db = self.backpropagate(deltas, pre_activations, activations)
@@ -130,7 +131,7 @@ class NeuralNetwork(object):
 
                 batch_y_test_pred = self.predict(X_test)
 
-                test_loss = cost_function(y_test, y_test_pred)
+                test_loss = cost_function(batch_y, batch_y_test_pred)
                 test_losses.append(test_loss)
                 test_accuracy = accuracy_score(y_test.T,batch_y_pred.T)
                 test_accuracies.append(test_accuracy)
@@ -138,6 +139,11 @@ class NeuralNetwork(object):
             for i,(dw_epoch, db_epoch) in enumerate(zip(dw_per_epoch, db_per_epoch)):
                 self.weights[i] = self.weights[i] - learning_rate * dw_epoch
                 self.biases[i] = self.biases[i] - learning_rate * db_epoch
+
+            if i % 10 == 0:
+                print('Epoch {} / {} | train loss: {} | train accuracy: {} | val loss : {} | val accuracy : {} '.format(
+                        e, epochs, np.round(np.mean(train_losses), 3), np.round(np.mean(train_accuracies), 3), 
+                        np.round(np.mean(test_losses), 3),  np.round(np.mean(test_accuracies), 3)))
 
             history_train_losses.append(np.mean(train_losses))
             history_train_accuracies.append(np.mean(train_accuracies))
@@ -158,6 +164,7 @@ class NeuralNetwork(object):
             'test_loss':history_test_losses,
             'test_acc':history_test_accuracies
         }
+        return history
 
     def predict(self,a):
 
